@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>욕구강도 프로파일</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#FBF9F4;
+  --paper:#FFFFFF;
+  --ink:#3A3631;
+  --ink-soft:#6B655C;
+  --ink-faint:#9C958A;
+  --line:#E8E1D4;
+  --accent:#7A8B5A;
+  --accent-deep:#5A6B3E;
+  --serif:'Gowun Batang',serif;
+  --sans:'Gowun Dodum',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;}
+body{max-width:520px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden;}
+.wrap{padding:0 22px;}
+
+/* botanical texture top */
+.bg-deco{position:fixed;top:0;left:50%;transform:translateX(-50%);width:520px;max-width:100%;height:220px;pointer-events:none;z-index:0;opacity:.5;}
+
+/* ---------- screens ---------- */
+.screen{display:none;position:relative;z-index:1;padding-bottom:60px;animation:fade .5s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- intro ---------- */
+.intro{min-height:100vh;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:48px 30px;}
+.intro .seed{font-size:44px;margin-bottom:18px;animation:sway 4s ease-in-out infinite;}
+@keyframes sway{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
+.intro h1{font-family:var(--serif);font-weight:700;font-size:30px;letter-spacing:.06em;color:var(--ink);margin-bottom:6px;}
+.intro .han{font-family:var(--serif);font-size:15px;color:var(--accent);letter-spacing:.3em;margin-bottom:26px;}
+.intro p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px;}
+.intro .lead{font-family:var(--serif);font-size:16px;color:var(--ink);line-height:1.9;margin-bottom:30px;}
+.divider{width:40px;height:1px;background:var(--line);margin:22px auto;}
+.meta-note{font-size:12px;color:var(--ink-faint);margin-top:28px;line-height:1.8;}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:var(--sans);font-size:16px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(122,139,90,.28);}
+.btn:active{transform:scale(.98);}
+.btn.ghost{background:transparent;color:var(--accent-deep);border:1px solid var(--line);box-shadow:none;}
+.btn.sm{width:auto;padding:11px 20px;font-size:14px;border-radius:11px;}
+
+/* ---------- quiz ---------- */
+.topbar{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 70%,transparent);padding:18px 22px 12px;}
+.progress-row{display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+.progress-track{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#9DAE76);border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1);}
+.progress-num{font-size:12.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+.q-area{padding:24px 22px 0;}
+.q-count{font-family:var(--serif);font-size:13px;color:var(--accent);letter-spacing:.15em;margin-bottom:18px;}
+.q-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:34px 26px;box-shadow:0 6px 24px rgba(58,54,49,.05);margin-bottom:26px;min-height:150px;display:flex;align-items:center;justify-content:center;}
+.q-text{font-family:var(--serif);font-size:21px;line-height:1.6;text-align:center;color:var(--ink);}
+
+.scale-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint);margin-bottom:10px;padding:0 4px;}
+.scale{display:flex;gap:9px;}
+.scale button{flex:1;aspect-ratio:1;border:1px solid var(--line);background:var(--paper);border-radius:14px;font-family:var(--sans);font-size:17px;color:var(--ink-soft);cursor:pointer;transition:.18s;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.scale button .dot{width:9px;height:9px;border-radius:50%;background:var(--line);transition:.18s;}
+.scale button:active{transform:scale(.94);}
+.scale button.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(122,139,90,.3);}
+.scale button.on .dot{background:#fff;}
+.scale-cap{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-faint);margin-top:9px;padding:0 2px;}
+
+.nav-row{display:flex;gap:12px;margin-top:30px;}
+.nav-row .btn{flex:1;}
+
+/* ---------- loading ---------- */
+.loading{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;}
+.loading .bloom{font-size:50px;animation:bloom 1.6s ease-in-out infinite;}
+@keyframes bloom{0%,100%{transform:scale(.85);opacity:.6;}50%{transform:scale(1.1);opacity:1;}}
+.loading p{font-family:var(--serif);font-size:16px;color:var(--accent-deep);}
+
+/* ---------- result ---------- */
+.result-head{text-align:center;padding:34px 0 10px;}
+.result-head .label{font-family:var(--serif);font-size:13px;letter-spacing:.2em;color:var(--accent);margin-bottom:8px;}
+.result-head h2{font-family:var(--serif);font-weight:700;font-size:26px;color:var(--ink);}
+.result-head .date{font-size:12px;color:var(--ink-faint);margin-top:6px;}
+
+.capture{background:var(--bg);padding:6px 0;}
+
+.chart-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:26px 18px 22px;margin:14px 0;}
+.radar-wrap{position:relative;width:100%;max-width:300px;margin:0 auto;}
+.radar-wrap svg{width:100%;height:auto;display:block;overflow:visible;}
+
+.top-need{text-align:center;margin:14px 0 2px;padding-top:18px;border-top:1px solid var(--line);}
+.top-need .crown{font-size:12px;color:var(--ink-faint);letter-spacing:.12em;margin-bottom:7px;}
+.top-need .name{font-family:var(--serif);font-weight:700;font-size:21px;color:var(--ink);}
+.top-need .desc{font-size:13.5px;color:var(--ink-soft);margin-top:7px;padding:0 10px;line-height:1.7;}
+.balance-note b{font-weight:700;color:var(--ink);}
+
+/* score chips */
+.scores{display:flex;justify-content:center;gap:0;margin:16px 0 4px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--paper);}
+.chip{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;flex:1;border-right:1px solid var(--line);}
+.chip:last-child{border-right:none;}
+.chip .ch-name{font-size:11px;color:var(--ink-soft);}
+.chip .ch-score{font-family:var(--serif);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums;color:var(--ink);}
+
+/* need detail cards */
+.detail-card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px 22px;margin:14px 0;position:relative;}
+.dc-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;}
+.dc-mark{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dc-title{font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.2;color:var(--ink);}
+.dc-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.dc-rank{font-size:11px;color:var(--ink-faint);}
+.dc-score-inline{margin-left:auto;text-align:right;display:flex;align-items:baseline;gap:2px;}
+.dc-score-inline .n{font-family:var(--serif);font-weight:700;font-size:23px;color:var(--ink);}
+.dc-score-inline .d{font-size:11px;color:var(--ink-faint);}
+.dc-oneline{font-size:14px;color:var(--ink-soft);margin:0 0 18px;line-height:1.7;padding-bottom:16px;border-bottom:1px solid var(--line);}
+.dc-section{margin-top:16px;}
+.dc-section .h{font-size:12px;letter-spacing:.1em;color:var(--ink-faint);margin-bottom:9px;}
+.dc-section ul{list-style:none;}
+.dc-section li{font-size:13.5px;color:var(--ink);padding:3px 0 3px 14px;position:relative;line-height:1.65;}
+.dc-section li::before{content:'';position:absolute;left:2px;top:12px;width:4px;height:4px;border-radius:50%;background:var(--ink-faint);}
+.dc-section p{font-size:13.5px;color:var(--ink);line-height:1.75;}
+.person-row{display:flex;align-items:baseline;gap:8px;margin:14px 0 6px;}
+.person-row .pn{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--ink);}
+.person-row .pt{font-size:11px;color:var(--ink-faint);}
+.person-desc{font-size:13px;color:var(--ink-soft);line-height:1.7;}
+.growth-box p{font-size:13px;color:var(--ink-soft);line-height:1.75;}
+
+/* balance note */
+.balance-note{padding:24px 4px 4px;margin:8px 0;text-align:center;}
+.balance-note .h{font-family:var(--serif);font-size:15px;margin-bottom:8px;color:var(--ink);}
+.balance-note p{font-size:13px;color:var(--ink-soft);line-height:1.8;}
+
+.foot-actions{display:flex;flex-direction:column;gap:11px;margin:30px 0 10px;}
+.disclaimer{font-size:11px;color:var(--ink-faint);text-align:center;line-height:1.7;margin-top:18px;padding:0 8px;}
+
+.section-divider{display:flex;align-items:center;gap:14px;margin:34px 4px 10px;}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+.section-divider span{font-family:var(--serif);font-size:13px;color:var(--ink-faint);letter-spacing:.12em;}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:13px;z-index:50;transition:.35s;opacity:0;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<svg class="bg-deco" viewBox="0 0 520 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M60 220 Q 70 120 60 60" stroke="#D8E0C4" stroke-width="2"/>
+  <path d="M60 110 Q 30 95 18 70 Q 50 80 60 105" fill="#E4EAD3"/>
+  <path d="M60 95 Q 90 80 104 56 Q 70 66 60 90" fill="#D8E0C4"/>
+  <circle cx="60" cy="52" r="11" fill="#E8C9D5"/>
+  <path d="M460 220 Q 448 130 462 70" stroke="#D8E0C4" stroke-width="2"/>
+  <path d="M462 120 Q 496 104 510 80 Q 476 90 462 114" fill="#E4EAD3"/>
+  <circle cx="462" cy="62" r="9" fill="#F0D9A8"/>
+</svg>
+
+<!-- ===== INTRO ===== -->
+<section class="screen active" id="screen-intro">
+  <div class="intro">
+    <div class="seed">🌱</div>
+    <h1>욕구강도 프로파일</h1>
+    <div class="han">開 花</div>
+    <p class="lead">다섯 가지 욕구는<br>우리 모두의 마음 안에 있습니다.<br>다만 지금 어떤 마음이 더 크게 자라 있는지,<br>그 모습을 들여다보는 시간입니다.</p>
+    <div class="divider"></div>
+    <p>50개의 문항에 솔직하게 답해주세요.</p>
+    <p>약 5분 정도 걸립니다.</p>
+    <div style="height:32px"></div>
+    <button class="btn" onclick="App.start()">시작하기</button>
+    <p class="meta-note">윌리엄 글래서의 5가지 기본 욕구 이론에 기반한<br>자기 이해용 검사입니다.</p>
+  </div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section class="screen" id="screen-quiz">
+  <div class="topbar">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+      <div class="progress-num" id="pnum">1 / 50</div>
+    </div>
+  </div>
+  <div class="q-area">
+    <div class="q-count" id="qcount">첫 번째 마음</div>
+    <div class="q-card"><div class="q-text" id="qtext">—</div></div>
+
+    <div class="scale-label"><span>전혀 그렇지 않다</span><span>언제나 그렇다</span></div>
+    <div class="scale" id="scale"></div>
+    <div class="scale-cap">
+      <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn ghost sm" id="prevBtn" onclick="App.prev()" style="flex:0 0 auto;width:auto;padding:14px 22px;">이전</button>
+      <button class="btn" id="nextBtn" onclick="App.next()" disabled style="opacity:.5;">다음</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LOADING ===== -->
+<section class="screen" id="screen-loading">
+  <div class="loading">
+    <div class="bloom">🌸</div>
+    <p id="loadmsg">마음을 들여다보는 중...</p>
+  </div>
+</section>
+
+<!-- ===== RESULT ===== -->
+<section class="screen" id="screen-result">
+  <div class="wrap">
+    <div class="result-head">
+      <div class="label">나의 욕구 프로파일</div>
+      <h2>다섯 가지 마음의 정원</h2>
+      <div class="date" id="rdate"></div>
+    </div>
+
+    <div id="captureArea" class="capture">
+      <div class="chart-card">
+        <div class="radar-wrap" id="radarWrap"></div>
+        <div class="top-need" id="topNeed"></div>
+      </div>
+      <div class="scores" id="scores"></div>
+    </div>
+
+    <div class="section-divider"><span>욕구별 해석</span></div>
+    <div id="details"></div>
+
+    <div class="balance-note" id="balanceNote"></div>
+
+    <div class="foot-actions">
+      <button class="btn" onclick="App.download()">결과 이미지로 저장하기</button>
+      <button class="btn ghost" onclick="App.restart()">다시 검사하기</button>
+    </div>
+    <p class="disclaimer">이 검사는 윌리엄 글래서의 선택이론(5가지 기본 욕구)에 기반한 자기 이해용 도구입니다. 욕구에는 좋고 나쁨이 없으며, 점수는 진단이 아니라 지금의 나를 비추는 거울입니다.</p>
+  </div>
+</section>
+
+<div class="toast" id="toast">저장되었어요</div>
+
+<script>
+// 욕구강도 프로파일 검사 문항
+// need: survival(생존) / love(사랑과 소속) / power(힘) / freedom(자유) / fun(즐거움)
+// 원본: 성인 욕구강도 프로파일 (윌리엄 글래서 5가지 기본 욕구 기반)
+// 각 욕구당 10문항, 총 50문항. 화면에서는 셔플되어 욕구가 드러나지 않음.
+
+const QUESTIONS = [
+  // A 생존 (survival)
+  { id: 1,  need: 'survival', text: '돈이나 물건을 절약한다' },
+  { id: 2,  need: 'survival', text: '돈으로 살 수 있는 것에 각별한 만족을 느낀다' },
+  { id: 3,  need: 'survival', text: '건강 유지에 관심을 가지고 있다' },
+  { id: 4,  need: 'survival', text: '균형 잡힌 식생활을 하려고 노력한다' },
+  { id: 5,  need: 'survival', text: '성적인 관심을 지니고 있다' },
+  { id: 6,  need: 'survival', text: '상식이나 규범에서 벗어나지 않으려 한다' },
+  { id: 7,  need: 'survival', text: '안정된 미래를 위해 저축하거나 투자한다' },
+  { id: 8,  need: 'survival', text: '부득이한 경우가 아니면 모험을 피하고 싶다' },
+  { id: 9,  need: 'survival', text: '외모를 단정하게 가꾸는 데 관심이 있다' },
+  { id: 10, need: 'survival', text: '쓸 수 있는 물건은 버리지 않고 간직한다' },
+
+  // B 사랑과 소속 (love)
+  { id: 11, need: 'love', text: '나는 사랑과 친근감을 많이 필요로 한다' },
+  { id: 12, need: 'love', text: '다른 사람의 복지에 관심이 있다' },
+  { id: 13, need: 'love', text: '타인을 위한 일에 시간을 낸다' },
+  { id: 14, need: 'love', text: '장거리 여행 때 옆자리의 사람에게 말을 건다' },
+  { id: 15, need: 'love', text: '사람들과 함께 있는 것을 좋아한다' },
+  { id: 16, need: 'love', text: '아는 사람과는 가깝고 친밀하게 지내는 편이다' },
+  { id: 17, need: 'love', text: '배우자가 내게 관심을 가져주기 바란다' },
+  { id: 18, need: 'love', text: '다른 사람이 나를 좋아해 주기 바란다' },
+  { id: 19, need: 'love', text: '다른 사람들에게 친절하게 대하는 편이다' },
+  { id: 20, need: 'love', text: '배우자가 나의 모든 것을 좋아해 주기 바란다' },
+
+  // C 힘 (power)
+  { id: 21, need: 'power', text: '내가 하는 가사나 직업에 대해 사람들로부터 인정받고 싶다' },
+  { id: 22, need: 'power', text: '다른 사람(가족)에게 충고나 조언을 잘 한다' },
+  { id: 23, need: 'power', text: '다른 사람(가족)에게 무엇을 하라고 잘 지시한다' },
+  { id: 24, need: 'power', text: '옳다고 생각되면 강하게 주장한다' },
+  { id: 25, need: 'power', text: '사람들에게 인정받고 싶다' },
+  { id: 26, need: 'power', text: '잘못된 일에 대해서는 강하게 이야기하며, 불편한 마음을 표현한다' },
+  { id: 27, need: 'power', text: '내 분야에서 탁월한 사람이 되고 싶다' },
+  { id: 28, need: 'power', text: '집단에 지도자가 되고 싶다' },
+  { id: 29, need: 'power', text: '나는 스스로 가치있는 인간이라고 느낀다' },
+  { id: 30, need: 'power', text: '내 성취와 재능이 자랑스럽다' },
+
+  // D 자유 (freedom)
+  { id: 31, need: 'freedom', text: '사람들이 내게 어떻게 하라고 지시하는 것이 싫다' },
+  { id: 32, need: 'freedom', text: '내가 원하지 않는 일을 하라고 하면 불편하다' },
+  { id: 33, need: 'freedom', text: '다른 사람에게 어떻게 살아야 한다고 강요하면 안된다고 믿는다' },
+  { id: 34, need: 'freedom', text: '인간의 자유로운 선택능력을 믿는다' },
+  { id: 35, need: 'freedom', text: '내가 하고 싶은 일을, 하고 싶을 때 하는 것이 좋다' },
+  { id: 36, need: 'freedom', text: '누가 무어라고 해도 내 방식대로 살고 싶다' },
+  { id: 37, need: 'freedom', text: '누구나 인생을 살고 싶은 대로 살 권리가 있다고 믿는다' },
+  { id: 38, need: 'freedom', text: '뭔가를 끝까지 하거나, 한 곳에 오래 머무는 것이 어렵다' },
+  { id: 39, need: 'freedom', text: '배우자의 자유를 구속하고 싶은 생각이 별로 없다' },
+  { id: 40, need: 'freedom', text: '나는 열린 마음을 지니고 있다' },
+
+  // E 즐거움 (fun)
+  { id: 41, need: 'fun', text: '큰소리로 웃기 좋아한다' },
+  { id: 42, need: 'fun', text: '유머를 사용하거나 듣는 것이 즐겁다' },
+  { id: 43, need: 'fun', text: '나 자신에 대해서도 웃을 때가 있다' },
+  { id: 44, need: 'fun', text: '유익하거나 새로운 것을 배우는 것이 즐겁다' },
+  { id: 45, need: 'fun', text: '흥미있는 게임이나 놀이를 좋아한다' },
+  { id: 46, need: 'fun', text: '여행하기를 좋아한다' },
+  { id: 47, need: 'fun', text: '독서를 좋아한다' },
+  { id: 48, need: 'fun', text: '영화나 음악 감상을 좋아한다' },
+  { id: 49, need: 'fun', text: '호기심이 많다' },
+  { id: 50, need: 'fun', text: '새로운 방식으로 일하거나 생각해 보는 것이 즐겁다' },
+];
+
+
+
+</script>
+<script>
+// 욕구별 해석 데이터
+// 출처: 윌리엄 글래서 선택이론 5가지 기본 욕구 + 김성경 「욕구코칭」 강의 자료
+// 신앙 인물은 강의 자료(욕구별 신앙 인물 슬라이드)에 근거
+
+const NEEDS = {
+  survival: {
+    key: 'survival',
+    label: '생존',
+    sub: '안정 · 안전',
+    color: '#5DCAA5',
+    colorDark: '#0F6E56',
+    colorBg: '#E1F5EE',
+    icon: 'seedling',
+    oneLine: '안전하고 안정된 토대 위에서 살아가고 싶은 마음',
+    traits: [
+      '계획적이고 꼼꼼하며 정리정돈을 잘한다',
+      '예측 가능한 것을 선호하고 갑작스러운 변화를 부담스러워한다',
+      '건강과 미래의 안정에 관심이 많고 절약·저축을 중시한다',
+      '상식과 규칙을 따르며 모험보다 안전을 택한다',
+    ],
+    faith: '계명과 규칙을 따라 성실히 살아가고, 큐티와 기도를 꾸준히 이어간다. 말씀대로 살려고 노력하는 신실함이 강점이다.',
+    person: '느헤미야',
+    personDesc: '귀국을 철저히 준비하고, 성을 지으면서도 침략에 대비한 신중함의 사람',
+    growth: '안정 안에 머무르려는 마음을 넘어, 하나님이 부르시는 새로운 자리로 한 걸음 내딛는 용기를 구해보세요.',
+  },
+  love: {
+    key: 'love',
+    label: '사랑과 소속',
+    short: '사랑',
+    sub: '친밀 · 함께',
+    color: '#ED93B1',
+    colorDark: '#993556',
+    colorBg: '#FBEAF0',
+    icon: 'heart',
+    oneLine: '사랑을 주고받으며 누군가와 깊이 연결되고 싶은 마음',
+    traits: [
+      '사람을 좋아하고 친밀하고 가까운 관계를 추구한다',
+      '타인의 필요를 잘 살피고 기꺼이 도우며 시간을 낸다',
+      '사랑과 관심을 받고 싶어하고 감정이 풍부하다',
+      '갈등 상황을 힘들어하고 함께 있는 것에서 안정을 얻는다',
+    ],
+    faith: '하나님을 감정으로 친밀하게 느끼며, 공동체와 함께하는 예배와 교제를 사랑한다. 섬김과 환대가 자연스럽다.',
+    person: '요한',
+    personDesc: '예수님의 품에 기대었던, 사랑 안에 거하기를 가장 깊이 노래한 사랑의 사도',
+    growth: '사람의 사랑에서 오는 채움을 넘어, 하나님께로부터 오는 사랑이 먼저 나를 채우도록 그분 앞에 머물러보세요.',
+  },
+  power: {
+    key: 'power',
+    label: '힘',
+    sub: '성취 · 인정',
+    color: '#EF9F27',
+    colorDark: '#854F0B',
+    colorBg: '#FAEEDA',
+    icon: 'flame',
+    oneLine: '무언가를 이루고 인정받으며 가치 있는 존재가 되고 싶은 마음',
+    traits: [
+      '성취 지향적이고 목표를 끝까지 밀고 나가는 뚝심이 있다',
+      '자기 표현이 분명하고 옳다고 여기면 강하게 주장한다',
+      '인정받고 싶어하고 리더의 자리를 원한다',
+      '자신의 재능과 성취를 자랑스럽게 여긴다',
+    ],
+    faith: '신앙의 목표가 생기면 끝까지 추진하며, 교회에서 맡은 역할을 통해 힘있게 헌신한다. 결단력과 리더십이 강점이다.',
+    person: '갈렙',
+    personDesc: '85세의 나이에도 "이 산지를 내게 주소서"라며 목표를 정하고 나아간 믿음의 사람',
+    growth: '인정받음으로 채워지는 가치를 넘어, 이미 하나님 안에서 가치 있는 존재임을 누리며 그 힘을 섬김으로 흘려보내 보세요.',
+  },
+  freedom: {
+    key: 'freedom',
+    label: '자유',
+    sub: '자율 · 독립',
+    color: '#85B7EB',
+    colorDark: '#185FA5',
+    colorBg: '#E6F1FB',
+    icon: 'wind',
+    oneLine: '구속받지 않고 스스로 선택하며 살아가고 싶은 마음',
+    traits: [
+      '스스로 선택하고 자기 방식대로 하는 것을 중요하게 여긴다',
+      '지시받거나 강요받는 것을 싫어한다',
+      '다른 사람의 자유도 존중하며 열린 마음을 지닌다',
+      '한 곳·한 방식에 매이기보다 변화와 다른 길을 추구한다',
+    ],
+    faith: '틀에 매이지 않고 자기만의 방식으로 하나님을 찾으며, 본질적인 질문을 던진다. 자율적이고 창의적인 신앙이 강점이다.',
+    person: '세례 요한',
+    personDesc: '홀로 광야에 서서, 시대와 전혀 다른 메시지를 외친 자유한 선지자',
+    growth: '가장 하나님을 닮은 자유의 욕구는, 동시에 하나님을 떠나기도 쉬운 욕구입니다. 자유를 그분 안에서 누리는 길을 찾아보세요.',
+  },
+  fun: {
+    key: 'fun',
+    label: '즐거움',
+    sub: '재미 · 배움',
+    color: '#97C459',
+    colorDark: '#3B6D11',
+    colorBg: '#EAF3DE',
+    icon: 'sun',
+    oneLine: '배우고 놀고 웃으며 삶을 즐기고 싶은 마음',
+    traits: [
+      '잘 웃고 유머를 좋아하며 분위기를 밝게 만든다',
+      '새로운 것을 배우고 알아가는 데서 기쁨을 얻는다',
+      '게임·여행·독서·음악 등 다양한 즐길거리를 좋아한다',
+      '호기심이 많고 새로운 방식으로 일하기를 즐긴다',
+    ],
+    faith: '예배와 신앙생활에서 기쁨과 생동감을 누리며, 배움을 즐긴다. 밝고 긍정적인 에너지로 공동체에 활력을 더한다.',
+    person: '다윗',
+    personDesc: '하나님 앞에서 체면을 잊고 힘껏 춤추며 찬양했던 기쁨의 사람',
+    growth: '재미를 좇는 마음을 넘어, 깊은 곳에서 솟는 주님 안의 기쁨을 발견하고 그 기쁨이 오래 머무르도록 해보세요.',
+  },
+};
+
+const NEED_ORDER = ['survival', 'love', 'power', 'freedom', 'fun'];
+
+
+
+</script>
+<script>
+const App = (() => {
+  let order = [];      // shuffled question objects
+  let answers = {};    // id -> 1..5
+  let idx = 0;
+  const TOTAL = QUESTIONS.length;
+  const ordinals = ['첫','두','세','네','다섯','여섯','일곱','여덟','아홉','열'];
+
+  function shuffle(a){
+    const x=[...a];
+    for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}
+    return x;
+  }
+  function ordinalLabel(n){
+    // n: 0-based
+    const one = n+1;
+    if(one<=10) return ordinals[n]+' 번째 마음';
+    return one+' 번째 마음';
+  }
+  function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function buildScale(){
+    const wrap=document.getElementById('scale');
+    wrap.innerHTML='';
+    for(let v=1;v<=5;v++){
+      const b=document.createElement('button');
+      b.innerHTML='<span class="dot"></span>';
+      b.onclick=()=>pick(v);
+      b.dataset.v=v;
+      wrap.appendChild(b);
+    }
+  }
+
+  function renderQuestion(){
+    const q=order[idx];
+    document.getElementById('qtext').textContent=q.text;
+    document.getElementById('qcount').textContent=ordinalLabel(idx);
+    document.getElementById('pnum').textContent=(idx+1)+' / '+TOTAL;
+    document.getElementById('pfill').style.width=((idx)/TOTAL*100)+'%';
+    // restore selection
+    const cur=answers[q.id];
+    document.querySelectorAll('#scale button').forEach(b=>{
+      b.classList.toggle('on', Number(b.dataset.v)===cur);
+    });
+    const nb=document.getElementById('nextBtn');
+    if(cur){nb.disabled=false;nb.style.opacity=1;}
+    else{nb.disabled=true;nb.style.opacity=.5;}
+    document.getElementById('nextBtn').textContent = (idx===TOTAL-1)?'결과 보기':'다음';
+    document.getElementById('prevBtn').style.visibility = idx===0?'hidden':'visible';
+  }
+
+  function pick(v){
+    const q=order[idx];
+    answers[q.id]=v;
+    document.querySelectorAll('#scale button').forEach(b=>{
+      b.classList.toggle('on', Number(b.dataset.v)===v);
+    });
+    const nb=document.getElementById('nextBtn');
+    nb.disabled=false;nb.style.opacity=1;
+    // auto-advance feel (small delay) except last
+    if(idx<TOTAL-1){
+      setTimeout(()=>{ if(answers[order[idx].id]) next(); },230);
+    }
+  }
+
+  function next(){
+    if(!answers[order[idx].id]) return;
+    if(idx<TOTAL-1){idx++;renderQuestion();}
+    else finish();
+  }
+  function prev(){ if(idx>0){idx--;renderQuestion();} }
+
+  function start(){
+    order=shuffle(QUESTIONS);
+    answers={};idx=0;
+    buildScale();
+    renderQuestion();
+    show('screen-quiz');
+  }
+
+  function computeScores(){
+    const s={survival:0,love:0,power:0,freedom:0,fun:0};
+    QUESTIONS.forEach(q=>{ s[q.need]+=(answers[q.id]||0); });
+    return s; // each 10..50
+  }
+
+  function finish(){
+    document.getElementById('pfill').style.width='100%';
+    show('screen-loading');
+    const msgs=['마음을 들여다보는 중...','다섯 빛깔을 모으는 중...','당신의 정원을 그리는 중...'];
+    let m=0;
+    const timer=setInterval(()=>{m++;if(m<msgs.length)document.getElementById('loadmsg').textContent=msgs[m];},700);
+    setTimeout(()=>{clearInterval(timer);renderResult();show('screen-result');},2100);
+  }
+
+  // ---------- radar ----------
+  function drawRadar(scores){
+    const size=300, cx=size/2, cy=size/2+6, R=104;
+    const keys=NEED_ORDER;
+    const n=keys.length;
+    const angle=i=>(-Math.PI/2)+(i*2*Math.PI/n);
+    const pt=(i,r)=>[cx+r*Math.cos(angle(i)), cy+r*Math.sin(angle(i))];
+    // value 10..50 -> 0..1
+    const norm=v=>(v-10)/40;
+
+    let grid='';
+    [0.25,0.5,0.75,1].forEach(level=>{
+      let p='';
+      for(let i=0;i<n;i++){const[x,y]=pt(i,R*level);p+=(i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1);}
+      p+='Z';
+      grid+=`<path d="${p}" fill="none" stroke="#E8E1D4" stroke-width="1"/>`;
+    });
+    // spokes + labels
+    let spokes='',labels='';
+    for(let i=0;i<n;i++){
+      const[x,y]=pt(i,R);
+      spokes+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#E8E1D4" stroke-width="1"/>`;
+      const[lx,ly]=pt(i,R+24);
+      const nd=NEEDS[keys[i]];
+      const anchor = Math.abs(lx-cx)<6?'middle':(lx>cx?'start':'end');
+      const shortName=nd.short||nd.label;
+      labels+=`<text x="${lx.toFixed(1)}" y="${(ly).toFixed(1)}" text-anchor="${anchor}" font-family="Gowun Batang, serif" font-size="13" font-weight="700" fill="${nd.colorDark}">${shortName}</text>`;
+      labels+=`<text x="${lx.toFixed(1)}" y="${(ly+15).toFixed(1)}" text-anchor="${anchor}" font-family="Gowun Dodum, sans-serif" font-size="11" fill="#9C958A">${scores[keys[i]]}점</text>`;
+    }
+    // data polygon
+    let dp='';const dots=[];
+    for(let i=0;i<n;i++){
+      const r=R*Math.max(.04,norm(scores[keys[i]]));
+      const[x,y]=pt(i,r);
+      dp+=(i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1);
+      dots.push([x,y,NEEDS[keys[i]].colorDark]);
+    }
+    dp+='Z';
+    const dotsSvg=dots.map(d=>`<circle cx="${d[0].toFixed(1)}" cy="${d[1].toFixed(1)}" r="4" fill="${d[2]}"/>`).join('');
+
+    return `<svg viewBox="-52 -6 ${size+104} ${size+6}" role="img" aria-label="욕구 레이더 차트">
+      <defs><linearGradient id="rgrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#9DAE76" stop-opacity="0.5"/>
+        <stop offset="1" stop-color="#C9A2B5" stop-opacity="0.45"/>
+      </linearGradient></defs>
+      ${grid}${spokes}
+      <path d="${dp}" fill="url(#rgrad)" stroke="#7A8B5A" stroke-width="2" stroke-linejoin="round"/>
+      ${dotsSvg}${labels}
+    </svg>`;
+  }
+
+  function renderResult(){
+    const scores=computeScores();
+    const ranked=[...NEED_ORDER].sort((a,b)=>scores[b]-scores[a]);
+    const d=new Date();
+    document.getElementById('rdate').textContent=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}`;
+
+    // radar
+    document.getElementById('radarWrap').innerHTML=drawRadar(scores);
+
+    // top need
+    const top=NEEDS[ranked[0]];
+    document.getElementById('topNeed').innerHTML=
+      `<div class="crown">가장 강하게 자란 마음</div>
+       <div class="name">${top.label}</div>
+       <div class="desc">${top.oneLine}</div>`;
+
+    // chips
+    document.getElementById('scores').innerHTML=NEED_ORDER.map(k=>{
+      const nd=NEEDS[k];
+      return `<div class="chip">
+        <span class="ch-name">${nd.label}</span>
+        <span class="ch-score">${scores[k]}</span>
+      </div>`;
+    }).join('');
+
+    // detail cards (ranked high -> low)
+    document.getElementById('details').innerHTML=ranked.map((k,i)=>{
+      const nd=NEEDS[k];
+      const rankTxt=['가장 강한 마음','두 번째','세 번째','네 번째','가장 조용한 마음'][i];
+      return `<div class="detail-card">
+        <div class="dc-head">
+          <span class="dc-mark" style="background:${nd.colorDark}"></span>
+          <div>
+            <div class="dc-title">${nd.label}</div>
+            <div class="dc-rank">${rankTxt}</div>
+          </div>
+          <div class="dc-score-inline">
+            <span class="n">${scores[k]}</span><span class="d">/ 50</span>
+          </div>
+        </div>
+        <div class="dc-oneline">${nd.oneLine}</div>
+
+        <div class="dc-section">
+          <div class="h">이런 모습이 있어요</div>
+          <ul>${nd.traits.map(t=>`<li>${t}</li>`).join('')}</ul>
+        </div>
+
+        <div class="dc-section">
+          <div class="h">신앙 안에서</div>
+          <p>${nd.faith}</p>
+          <div class="person-row"><span class="pn">${nd.person}</span><span class="pt">— 닮은 인물</span></div>
+          <div class="person-desc">${nd.personDesc}</div>
+        </div>
+
+        <div class="dc-section">
+          <div class="h">성장의 방향</div>
+          <div class="growth-box"><p>${nd.growth}</p></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // balance note (highest vs lowest)
+    const hi=NEEDS[ranked[0]], lo=NEEDS[ranked[4]];
+    const gap=scores[ranked[0]]-scores[ranked[4]];
+    let bMsg;
+    if(gap<=8) bMsg=`다섯 가지 마음이 비교적 고르게 자리잡고 있어요. 어느 한쪽으로 치우치지 않은, 균형 잡힌 정원입니다.`;
+    else bMsg=`<b>${hi.label}</b>의 마음이 가장 크게 자라 있고, <b>${lo.label}</b>의 마음은 지금 조금 더 조용합니다. 조용한 마음이 부족한 것은 아니에요. 다만 그 마음이 어떤 빛깔로 피어나길 원하는지 한 번 들여다볼 만합니다.`;
+    document.getElementById('balanceNote').innerHTML=
+      `<div class="h">나의 정원, 한눈에</div><p>${bMsg}</p>`;
+  }
+
+  function emoji(icon){
+    return {seedling:'🌱',heart:'💗',flame:'🔥',wind:'🍃',sun:'☀️'}[icon]||'🌸';
+  }
+
+  function download(){
+    const node=document.getElementById('captureArea');
+    const btn=event.target;
+    const old=btn.textContent;btn.textContent='저장하는 중...';
+    html2canvas(node,{backgroundColor:'#FBF9F4',scale:2,useCORS:true}).then(canvas=>{
+      canvas.toBlob(blob=>{
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;a.download='욕구강도프로파일.png';a.click();
+        URL.revokeObjectURL(url);
+        btn.textContent=old;
+        toast('이미지로 저장되었어요 🌷');
+      });
+    }).catch(()=>{btn.textContent=old;toast('저장에 실패했어요. 다시 시도해 주세요.');});
+  }
+
+  function toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2200);
+  }
+
+  function restart(){ show('screen-intro'); }
+
+  return {start,next,prev,download,restart};
+})();
+</script>
+</body>
+</html>
